@@ -1,60 +1,57 @@
 import { Inngest } from "inngest";
 import prisma from "../configs/prisma.js";
 
+// Create a client to send and received events
 export const inngest = new Inngest({ id: "project-management" });
 
-// CREATE
+
+// Ingest Function to save user data to a database
 const syncUserCreation = inngest.createFunction(
   { id: "sync-user-created-from-clerk" },
   { event: "clerk/user.created" },
   async ({ event }) => {
     const { data } = event;
 
-    await prisma.user.upsert({
-      where: { id: data.id },
-      update: {},
-      create: {
+    await prisma.user.create({
+      data: {
         id: data.id,
-        email: data.email_addresses?.[0]?.email_address ?? `${data.id}@clerk.local`,
-        name: [data.first_name, data.last_name].filter(Boolean).join(" "),
-        image: data.image_url ?? "",
-      },
+        email: data?.email_addresses[0]?.email_address,
+        name: data?.first_name + "" + data?.last_name,
+        image: data?.image_url,
+      }
     });
   }
 );
 
-// DELETE
+// Inngest Function to delete user from database
 const syncUserDeletion = inngest.createFunction(
   { id: "sync-user-deleted-from-clerk" },
   { event: "clerk/user.deleted" },
   async ({ event }) => {
     const { data } = event;
 
-    await prisma.user.deleteMany({
-      where: { id: data.id },
+    await prisma.user.delete({
+      where: { 
+        id: data.id 
+      },
     });
   }
 );
 
-// UPDATE
+// Inngest Function to update user data in database
+
 const syncUserUpdation = inngest.createFunction(
   { id: "sync-user-updated-from-clerk" },
   { event: "clerk/user.updated" },
   async ({ event }) => {
     const { data } = event;
 
-    await prisma.user.upsert({
+    await prisma.user.update({
       where: { id: data.id },
-      update: {
-        email: data.email_addresses?.[0]?.email_address ?? undefined,
-        name: [data.first_name, data.last_name].filter(Boolean).join(" "),
-        image: data.image_url ?? "",
-      },
-      create: {
-        id: data.id,
-        email: data.email_addresses?.[0]?.email_address ?? `${data.id}@clerk.local`,
-        name: [data.first_name, data.last_name].filter(Boolean).join(" "),
-        image: data.image_url ?? "",
+      data: {
+        email: data.email_addresses?.[0]?.email_address,
+        name: data?.first_name + "" + data?.last_name,
+        image: data.image_url,
       },
     });
   }
