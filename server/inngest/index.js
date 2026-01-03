@@ -106,7 +106,7 @@ const syncWorkspaceUpdationCreation = inngest.createFunction(
 // Inngest Function to delete workspace from database
 const syncWorkspaceDeletion = inngest.createFunction(
   { id: 'delete-workspace-with-clerk'},
-  { event: 'clerk/organization.delete'},
+  { event: 'clerk/organization.deleted'},
   async({ event }) => {
     const { data } = event;
     await prisma.workspace.delete({
@@ -128,7 +128,7 @@ const syncWorkspaceMemberCreation = inngest.createFunction(
       data: {
         userId: data.user_id,
         workspaceId: data.organization_id,
-        role: String(data.role_nam).toUpperCase(),
+        role: String(data.role_name).toUpperCase(),
       }
     })
   }
